@@ -1,5 +1,5 @@
 {
-  "name": "mindease---ai-emotional-support",
+  "name": "copy-of-lumyn",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,11 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "recharts": "^3.4.1",
+    "react": "^19.2.0",
+    "react-router-dom": "^7.9.6",
     "react-dom": "^19.2.0",
     "@google/genai": "^1.29.1",
-    "react": "^19.2.0",
-    "react-router-dom": "^7.9.6"
+    "@supabase/supabase-js": "latest"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

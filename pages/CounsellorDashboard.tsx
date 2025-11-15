@@ -1,38 +1,39 @@
 
 import React, { useState } from 'react';
 import Layout from '../components/shared/Layout';
-import AppointmentSection from '../components/student/AppointmentSection';
-import JournalSection from '../components/student/JournalSection';
-import ResourcesSection from '../components/student/ResourcesSection';
-import AIChatSection from '../components/student/AIChatSection';
+import AppointmentRequests from '../components/counsellor/AppointmentRequests';
+import CalendarView from '../components/counsellor/CalendarView';
+import StudentJournalsView from '../components/counsellor/StudentJournalsView';
 import { useAuth } from '../hooks/useAuth';
 import Chat from '../components/shared/Chat';
-import { CalendarIcon, JournalIcon, BookOpenIcon, SparklesIcon, ChatBubbleLeftRightIcon } from '../components/shared/icons/Icons';
+import { CalendarIcon, JournalIcon, UsersIcon, UserCircleIcon, ChatBubbleLeftRightIcon } from '../components/shared/icons/Icons';
+import StudentProfilesView from '../components/counsellor/StudentProfilesView';
 
-type ActiveTab = 'appointments' | 'journal' | 'resources' | 'ai-chat' | 'chat';
 
-const StudentDashboard: React.FC = () => {
+type ActiveTab = 'requests' | 'calendar' | 'journals' | 'profiles' | 'chat';
+
+const CounsellorDashboard: React.FC = () => {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<ActiveTab>('appointments');
+    const [activeTab, setActiveTab] = useState<ActiveTab>('requests');
 
     const renderContent = () => {
         if (!user) return null;
         switch (activeTab) {
-            case 'appointments':
-                return <AppointmentSection studentId={user.id} />;
-            case 'journal':
-                return <JournalSection studentId={user.id} />;
-            case 'resources':
-                return <ResourcesSection />;
-            case 'ai-chat':
-                return <AIChatSection />;
+            case 'requests':
+                return <AppointmentRequests counsellorId={user.id} />;
+            case 'calendar':
+                return <CalendarView counsellorId={user.id} />;
+            case 'journals':
+                return <StudentJournalsView />;
+            case 'profiles':
+                return <StudentProfilesView />;
             case 'chat':
                 return <Chat currentUser={user} />;
             default:
-                return <AppointmentSection studentId={user.id} />;
+                return <AppointmentRequests counsellorId={user.id} />;
         }
     };
-
+    
     // Fix: Changed icon type from JSX.Element to React.ReactElement to resolve namespace issue.
     const NavButton = ({ tab, label, icon }: { tab: ActiveTab, label: string, icon: React.ReactElement }) => (
         <button
@@ -52,12 +53,12 @@ const StudentDashboard: React.FC = () => {
         <Layout>
             <div className="flex flex-col h-full md:flex-row">
                 <nav className="flex-shrink-0 w-full p-4 bg-white border-b md:w-64 md:border-r dark:bg-gray-800 dark:border-gray-700">
-                    <h2 className="mb-4 text-xl font-semibold text-gray-800 dark:text-white">Dashboard</h2>
+                    <h2 className="mb-4 text-xl font-semibold text-gray-800 dark:text-white">Counsellor Portal</h2>
                     <div className="space-y-2">
-                        <NavButton tab="appointments" label="Appointments" icon={<CalendarIcon />} />
-                        <NavButton tab="journal" label="My Journal" icon={<JournalIcon />} />
-                        <NavButton tab="resources" label="Resources" icon={<BookOpenIcon />} />
-                        <NavButton tab="ai-chat" label="AI Assistant" icon={<SparklesIcon />} />
+                        <NavButton tab="requests" label="Requests" icon={<UsersIcon />} />
+                        <NavButton tab="calendar" label="Calendar" icon={<CalendarIcon />} />
+                        <NavButton tab="profiles" label="Student Profiles" icon={<UserCircleIcon />} />
+                        <NavButton tab="journals" label="Student Journals" icon={<JournalIcon />} />
                         <NavButton tab="chat" label="Live Chat" icon={<ChatBubbleLeftRightIcon />} />
                     </div>
                 </nav>
@@ -69,4 +70,4 @@ const StudentDashboard: React.FC = () => {
     );
 };
 
-export default StudentDashboard;
+export default CounsellorDashboard;
