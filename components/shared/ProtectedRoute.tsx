@@ -5,7 +5,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { Role } from '../../types';
 
 interface ProtectedRouteProps {
-  // Fix: Changed children type from JSX.Element to React.ReactElement to resolve namespace issue.
   children: React.ReactElement;
   allowedRoles: Role[];
 }
@@ -22,9 +21,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  if (!allowedRoles.includes(user!.role)) {
+  // If user is authenticated but has no role yet, they can't access protected pages.
+  // Redirect them to the root, which will then handle navigation to /complete-profile.
+  if (!user?.role) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (!allowedRoles.includes(user.role)) {
     // Redirect to their own dashboard if they try to access a wrong route
-    const homePath = user!.role === Role.STUDENT ? '/student-dashboard' : '/counsellor-dashboard';
+    const homePath = user.role === Role.STUDENT ? '/student-dashboard' : '/counsellor-dashboard';
     return <Navigate to={homePath} replace />;
   }
 

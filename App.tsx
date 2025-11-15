@@ -8,11 +8,13 @@ import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/shared/ProtectedRoute';
 import { Role } from './types';
 import Profile from './pages/Profile';
+import CompleteProfile from './pages/CompleteProfile';
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
+      <Route path="/complete-profile" element={<CompleteProfile />} />
       <Route 
         path="/student-dashboard" 
         element={

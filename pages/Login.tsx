@@ -1,59 +1,52 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Role } from '../types';
 
+const GoogleIcon = () => (
+    <svg className="w-5 h-5 mr-3" viewBox="0 0 48 48">
+        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+    </svg>
+);
+
 const Login: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [role, setRole] = useState<Role>(Role.STUDENT);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { login, signup, user, isAuthenticated } = useAuth();
+  const { loginWithGoogle, user, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-        if (user.role === Role.STUDENT) {
+    if (!authLoading && isAuthenticated && user) {
+        if (!user.role) {
+            navigate('/complete-profile');
+        } else if (user.role === Role.STUDENT) {
             navigate('/student-dashboard');
         } else if (user.role === Role.COUNSELLOR) {
             navigate('/counsellor-dashboard');
         }
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate, authLoading]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccessMessage('');
+  const handleGoogleLogin = async () => {
     setLoading(true);
-
+    setError('');
     try {
-      if (isLogin) {
-        const { error } = await login(email, password);
+        const { error } = await loginWithGoogle();
         if (error) throw error;
-      } else {
-        const { error } = await signup(name, email, password, role);
-        if (error) throw error;
-
-        // On successful signup, show message and switch to login form
-        setSuccessMessage('Sign up successful! Please check your email to confirm your account.');
-        setIsLogin(true);
-        // Clear form fields for a clean transition
-        setName('');
-        setEmail('');
-        setPassword('');
-      }
     } catch (err: any) {
-      setError(err.message || 'An error occurred.');
-    } finally {
-      setLoading(false);
+        setError(err.message || 'An error occurred during Google sign-in.');
+        setLoading(false);
     }
   };
+  
+  if (authLoading || (isAuthenticated && user)) {
+      return <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-800">Loading...</div>;
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-800">
@@ -61,88 +54,22 @@ const Login: React.FC = () => {
         <div className="text-center">
           <h1 className="text-4xl font-bold text-indigo-600 dark:text-indigo-400">Lumyn</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-300">
-            {isLogin ? 'Welcome back! Please sign in.' : 'Create your account to get started.'}
+            Welcome! Please sign in to continue.
           </p>
         </div>
 
-        {successMessage && <p className="text-sm text-center text-green-500 animate-fade-in-up">{successMessage}</p>}
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {!isLogin && (
-            <div>
-              <label htmlFor="name" className="sr-only">Full Name</label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                placeholder="Full Name"
-              />
-            </div>
-          )}
-          <div>
-            <label htmlFor="email-address" className="sr-only">Email address</label>
-            <input
-              id="email-address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              placeholder="Email address"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="sr-only">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              placeholder="Password (min. 6 characters)"
-            />
-          </div>
-
-          {!isLogin && (
-            <div className="flex items-center justify-around">
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-300">I am a:</span>
-                <div className="flex items-center">
-                    <input id="role-student" name="role" type="radio" checked={role === Role.STUDENT} onChange={() => setRole(Role.STUDENT)} className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" />
-                    <label htmlFor="role-student" className="block ml-2 text-sm text-gray-900 dark:text-gray-300">Student</label>
-                </div>
-                <div className="flex items-center">
-                    <input id="role-counsellor" name="role" type="radio" checked={role === Role.COUNSELLOR} onChange={() => setRole(Role.COUNSELLOR)} className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" />
-                    <label htmlFor="role-counsellor" className="block ml-2 text-sm text-gray-900 dark:text-gray-300">Counsellor</label>
-                </div>
-            </div>
-          )}
-
-          {error && <p className="text-sm text-center text-red-500">{error}</p>}
-          
-          <div>
+        {error && <p className="text-sm text-center text-red-500 animate-fade-in-up">{error}</p>}
+        
+        <div className="pt-4">
             <button
-              type="submit"
+              type="button"
+              onClick={handleGoogleLogin}
               disabled={loading}
-              className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
+              className="relative flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm group hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-60 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
             >
-              {loading ? 'Processing...' : (isLogin ? 'Sign in' : 'Sign up')}
+              <GoogleIcon />
+              {loading ? 'Redirecting...' : 'Sign in with Google'}
             </button>
-          </div>
-        </form>
-        <div className="text-sm text-center">
-          <button onClick={() => { setIsLogin(!isLogin); setError(''); setSuccessMessage(''); }} className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
-            {isLogin ? 'Don\'t have an account? Sign up' : 'Already have an account? Sign in'}
-          </button>
         </div>
       </div>
     </div>

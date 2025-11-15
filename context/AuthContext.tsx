@@ -1,13 +1,14 @@
+
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { User, Role } from '../types';
 import { supabase } from '../services/supabaseClient';
-import { AuthError, Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { AuthError, Session, User as SupabaseUser, PostgrestError } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signup: (name: string, email: string, password: string, role: Role) => Promise<{ error: AuthError | null }>;
+  loginWithGoogle: () => Promise<{ error: AuthError | null }>;
+  updateUserRole: (role: Role) => Promise<{ error: PostgrestError | null }>;
   logout: () => Promise<{ error: AuthError | null }>;
   loading: boolean;
 }
@@ -50,7 +51,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .eq('id', supabaseUser.id)
           .single();
 
-        // If a profile exists, use it.
         if (userProfile) {
             setUser({
                 id: userProfile.id,
@@ -62,17 +62,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return;
         }
 
-        // If no profile, and the error indicates "0 rows", create the profile.
-        // This handles the first login for a new user and respects RLS policies.
-        if (error && error.code === 'PGRST116') {
+        if (error && error.code === 'PGRST116') { // "0 rows" error, meaning no profile exists
             const { data: newUserProfile, error: insertError } = await supabase
                 .from('users')
                 .insert({
                     id: supabaseUser.id,
-                    name: supabaseUser.user_metadata.name,
+                    name: supabaseUser.user_metadata.full_name || supabaseUser.user_metadata.name,
                     email: supabaseUser.email,
-                    role: supabaseUser.user_metadata.role,
-                    avatar_url: supabaseUser.user_metadata.avatar_url,
+                    role: null, // Role is set in the complete-profile step
+                    avatar_url: supabaseUser.user_metadata.picture || supabaseUser.user_metadata.avatar_url,
                 })
                 .select()
                 .single();
@@ -94,36 +92,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch (error) {
           console.error('Error fetching or creating user profile:', error);
           setUser(null);
-          await supabase.auth.signOut(); // Log out user to prevent broken state
+          await supabase.auth.signOut();
       }
   }
 
-
-  const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+    });
     return { error };
   };
+  
+  const updateUserRole = async (role: Role) => {
+    if (!user) return { error: { message: "User not found", code: "404", details: "", hint: ""} as PostgrestError };
+    
+    const { error } = await supabase
+        .from('users')
+        .update({ role: role })
+        .eq('id', user.id);
 
-  const signup = async (name: string, email: string, password: string, role: Role) => {
-    const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            data: {
-                name,
-                role,
-                avatar_url: `https://i.pravatar.cc/150?u=${email}` // Default avatar
-            }
-        }
-    });
-
-    // Manual insertion into 'users' table removed to fix RLS violation.
-    // Profile creation is now handled by fetchUserProfile on first login,
-    // which is a more secure and robust pattern.
+    if (!error) {
+        setUser(currentUser => currentUser ? { ...currentUser, role: role } : null);
+    }
     
     return { error };
   };
-
 
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -132,7 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, loading }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loginWithGoogle, updateUserRole, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
