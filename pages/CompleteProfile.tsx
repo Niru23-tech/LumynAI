@@ -46,18 +46,18 @@ const CompleteProfile: React.FC = () => {
                 
                 <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:justify-center sm:space-x-4">
                     <button
-                        onClick={() => handleRoleSelect(Role.STUDENT)}
+                        onClick={() => handleRoleSelect(Role.COUNSELLOR)}
                         disabled={isUpdating}
                         className="px-6 py-3 font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
-                        I am a Student
+                        I am a Counsellor
                     </button>
                     <button
-                        onClick={() => handleRoleSelect(Role.COUNSELLOR)}
+                        onClick={() => handleRoleSelect(Role.STUDENT)}
                         disabled={isUpdating}
-                        className="px-6 py-3 font-medium text-white bg-teal-600 rounded-md hover:bg-teal-700 disabled:bg-teal-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                        className="px-6 py-3 font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
                     >
-                        I am a Counsellor
+                        I am a Student
                     </button>
                 </div>
                 {isUpdating && <p className="pt-2 text-sm text-gray-500">Updating...</p>}
